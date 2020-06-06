@@ -4,15 +4,15 @@ clc;
 %-----------------------读入图像-------------------------------------%
 markbefore=imread('p203.bmp');
 markbefore2=rgb2gray(markbefore);
-mark=im2bw(markbefore2);    %使水印图像变为二值图
-figure(1);      %打开窗口
-subplot(2,3,1);    %该窗口内的图像可以有两行三列
-imshow(mark),title('水印图像');   %显示水印图像
-[rm,cm]=size(mark);   %计算水印图像的长宽
+mark=im2bw(markbefore2);    
+figure(1);      
+subplot(2,3,1);   
+imshow(mark),title('水印图像');  
+[rm,cm]=size(mark);  
 cover=imread('pic.bmp');
 cover1=imresize(cover,[512,512]);
 cover_image=rgb2gray(cover1);
-subplot(2,3,2),imshow(cover_image,[]),title('原始图像'); %[]表示显示时灰度范围为image上的灰度最小值到最大值
+subplot(2,3,2),imshow(cover_image,[]),title('原始图像'); 
  
 before=blkproc(cover_image,[8 8],'dct2');   %将载体图像的灰度层分为8×8的小块，每一块内做二维DCT变换，结果记入矩阵before
 I=mark;
@@ -41,94 +41,19 @@ for i=1:rm          %在中频段嵌入水印
 end;
 result=blkproc(after,[8 8],'idct2');    %将经处理的图像分为8×8的小块，每一块内做二维DCT逆变换
 result = uint8(result);
-imwrite(result,'watermarked.bmp','bmp');      %存储添加水印后的图像
-subplot(2,3,3),imshow(result,[]),title('隐写图像');    %显示添加水印后的图像
-%定义一个空空间来存储提取的水印
-disp('请选择对图像的攻击方式：');
-disp('1.添加白噪声');
-disp('2.高斯低通滤波处理');
-disp('3.对图像进行部分剪切');
-disp('4.将图像旋转十度');
-disp('5.将图像压缩处理');
-disp('6.添加椒盐噪声');
-disp('7.不处理图像，直接显示提取水印');
-disp('输入其它数字则直接显示提取水印');
-choice=input('请输入选择：');
-figure(1);
-switch choice        %读入输入的选择  withmark为等待提取水印的图像
-    case 1
-        result_1=result;
-        withmark=imnoise(result_1,'gaussian',0.02);                                      %加入椒盐躁声
-        subplot(2,3,4);
-        imshow(withmark,[]);
-        title('高斯白噪声图像');                                                       %显示加了椒盐噪声的图像
-    case 2
-         result_2=result;
-         H=fspecial('gaussian',[4,4],0.2); 
-         result_2=imfilter(result_2,H); 
-         subplot(2,3,4); 
-         imshow(result_2,[]); 
-         title('高斯低通滤波图像'); 
-         withmark=result_2;
-    case 3
-        result_3=result;
-        result_3(1:64,1:400)=512;   %使图像上方被剪裁
-        subplot(2,3,4);
-        imshow(result_3);
-        title('上方剪切后图像');
-        withmark=result_3;
-    case 4
-        result_4=imrotate(result,10,'bilinear','crop');   %最邻近线性插值算法旋转10度
-        subplot(2,3,4);
-        imshow(result_4);
-        title('旋转10度后图像');
-        withmark=result_4;
-    case 5
-        result_5 = result; 
-        result_5=im2double(result_5); 
-        cnum=10; 
-        dctm=dctmtx(8); 
-        P1=dctm; 
-        P2=dctm.'; 
-        imageDCT=blkproc(result_5,[8,8],'P1*x*P2',dctm,dctm.'); 
-        DCTvar=im2col(imageDCT,[8,8],'distinct').'; 
-        n=size(DCTvar,1); 
-        DCTvar=(sum(DCTvar.*DCTvar)-(sum(DCTvar)/n).^2)/n; 
-        [dum,order]=sort(DCTvar); 
-        cnum=64-cnum; 
-        mask=ones(8,8); 
-        mask(order(1:cnum))=zeros(1,cnum); 
-        im88=zeros(9,9); 
-        im88(1:8,1:8)=mask; 
-        im128128=kron(im88(1:8,1:8),ones(16)); 
-        dctm=dctmtx(8); 
-        P1=dctm.'; 
-        P2=mask(1:8,1:8); 
-        P3=dctm; 
-        result_5=blkproc(imageDCT,[8,8],'P1*(x.*P2)*P3',dctm.',mask(1:8,1:8),dctm); 
-        WImage5cl=mat2gray(result_5); 
-        subplot(2,3,4); 
-        imshow(WImage5cl); 
-        title('JPEG压缩图像'); 
-        withmark=WImage5cl;
-    case 6
-        result_6=result;
-        withmark=imnoise(result_6,'salt & pepper',0.02); %加入椒盐躁声
-        subplot(2,3,4);
-        imshow(withmark,[]);
-        title('加入椒盐噪声后的图像');     %显示加了椒盐噪声的图像
-    case 7
+imwrite(result,'watermarked.bmp','bmp');     %隐写图像命名为watermarked.bmp
+subplot(2,3,3),imshow(result,[]),title('隐写图像');   
+
+
         subplot(2,3,4);
         imshow(result,[]);
-        title('未受攻击的水印图像');
+        title('水印图像');
         withmark=result;
-    otherwise
-        disp('输入数字选择无效，图像未受攻击，直接提取水印');
         subplot(2,3,4);
         imshow(result,[]);
-        title('无攻击图像');
+        title('图像');
         withmark=result;
-end
+
  
 %------------------------水印提取-----------------------------%
 %
@@ -158,6 +83,4 @@ mark_2 = uint8(mark_2);
 imshow(mark_2,[]),title('提取水印');
 subplot(2,3,6);
 imshow(mark),title('原水印图像');
-NC=correlation(mark_2,mark);  
-disp('原水印图像与提取水印图像互相关系数:')
-disp(NC);
+
